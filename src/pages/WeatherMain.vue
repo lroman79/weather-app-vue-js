@@ -7,6 +7,7 @@
                     placeholder="Search Locations..." v-model="cityQuery" />
                  <button class="search-btn" @click="fetchWeather">Search</button>
                 </div>
+                 <button class="current-location-btn" @click="fetchCurrentLocationWeather">Get Current Location</button>
                 <div v-if="errorMessage" class="input-errors"> {{ errorMessage }}</div>
                 
             </section>
@@ -26,12 +27,11 @@
             <div v-if="isLoading">
                 <base-spinner></base-spinner>
             </div>
-            <weather-item v-else-if="hasWeather" 
+             <weather-item v-else-if="hasWeather" 
                 :icon="getWeather.icon" 
                 :cityname="getWeather.cityName"
                 :weathertext="getWeather.WeatherText" :amount="getWeather.Temperature.Metric.Value"
                 :unit="getWeather.Temperature.Metric.Unit"></weather-item>
-            <div class="no-weather-block" v-else>The weather is not loaded yet..</div>
         </section>
 
         <div class="forecast-5-days" v-if="hasForeCast">
@@ -58,21 +58,21 @@
         },
         data() {
             return {
-                isLoading: false,
+                isLoading: true,
                 isInFavorites: false,
                 defaultLocationAPI: 215854,
                 currentLocationAPI: 215854,
                 defaultLocationCity: 'Tel Aviv',
+                defaultGeoPosition: '',
                 cityName: '',
                 TemperatureUnit: 'Metric',
                 cityQuery: '',
-                APIkey: 'KWM5jZQwAi8lfyrJkK9BfGOSNTAxlXfC',
-                //APIkey: '1BAKSQ0qyJYiMpAP4liSrutHJRd5a9zE',
+                //APIkey: 'KWM5jZQwAi8lfyrJkK9BfGOSNTAxlXfC',
+                APIkey: '1BAKSQ0qyJYiMpAP4liSrutHJRd5a9zE',
                 locationsStorageName: 'storedLocations',
                 favoritesStorageName: 'storedFavoriteCities',
                 errorMessage: null,
                 location: null,
-                gettingLocation: false,
                 errorStr: null,
                 testLocation: {
                     "LocalObservationDateTime": "2021-07-06T10:45:00+03:00",
@@ -192,8 +192,13 @@
                     keyApi: this.APIkey
                 });
             },
+            loadDefaultLocationInfo(locationCoordinates) {
+                return this.$store.dispatch('weather/loadDefaultLocationInfo', {
+                    location: locationCoordinates,
+                    keyApi: this.APIkey
+                });
+            },
             loadWeather(locationApi) {
-                this.isLoading = true;
                 this.$store.dispatch('weather/loadWeather', {
                     api: locationApi,
                     keyApi: this.APIkey
@@ -207,9 +212,9 @@
                 });
             },
             fetchWeather() {
-                this.errorMessage = '';
                 let locationCity = this.cityQuery;
                 let locationApi = null;
+                this.errorMessage = '';
 
                 if (locationCity.trim().length < 1 || locationCity.toLowerCase() === (this.defaultLocationCity)
                     .toLowerCase()) {
@@ -234,10 +239,10 @@
 
                 if (!locationApi) {
                     this.loadLocationInfo(locationCity)
-                        .then(res => {
+                        .then(res => {                                            
                             if (res.data && res.data.length > 0) {
                                 const locationInfo = this.locationInfo;
-                                locationApi = locationInfo.Key;
+                                locationApi = locationInfo.Key;                               
                                 this.cityName = locationInfo.LocalizedName;
 
                                 this.loadWeather(locationApi);
@@ -263,6 +268,43 @@
                     this.isInFavorites = this.checkIfInFavorites();
                 }
             },
+            fetchCurrentLocationWeather() {
+                if(!this.isSupportGeolocation) {
+                    this.errorMessage = 'Geolocation is not available.';
+                    return;
+                }
+                
+                window.navigator.geolocation.getCurrentPosition(pos => {
+                 const coordsObj = { 
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude
+                 };
+
+                 const geoCoordinates = `${coordsObj.latitude.toFixed(1)},${coordsObj.longitude.toFixed(1)}`;
+
+                 this.loadDefaultLocationInfo(geoCoordinates)
+                        .then(res => {                            
+                            if (res.data && Object.keys(res.data).length !== 0) {
+                                const locationInfo = this.defaultLocationInfo;
+                                const locationApi = locationInfo.Key;                   
+                                this.cityName = locationInfo.LocalizedName;
+
+                                this.loadWeather(locationApi);
+                                this.loadForeCast(locationApi);
+
+                                this.currentLocationAPI = locationApi;
+                                this.isInFavorites = this.checkIfInFavorites();
+                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        });
+
+                }, err => {
+                 this.gettingLocation = false;
+                 this.errorMessage = `Sorry, but the following error occurred: '${err.message}`;
+                })
+            },
             initWeatherData() {
                     if (this.$route.query.locationId && this.$route.query.locationName) {
                         this.loadWeather(this.$route.query.locationId); 
@@ -279,13 +321,16 @@
                     } 
                    this.isInFavorites = this.checkIfInFavorites();       
             },
-            // toggleUnits() {
-            //     if (this.TemperatureUnit !== "Imperial") {
-            //      this.TemperatureUnit = "Imperial";
-            //     } else {
-            //      this.TemperatureUnit = "Metric";
-            //     }
-            // },     
+            isSupportGeolocation() {
+             return (("geolocation" in window.navigator)) ? true : false;
+            },
+            toggleUnits() {
+                if (this.TemperatureUnit !== "Imperial") {
+                 this.TemperatureUnit = "Imperial";
+                } else {
+                 this.TemperatureUnit = "Metric";
+                }
+            },   
         },
         computed: {
             ...mapState({
@@ -309,6 +354,9 @@
             },
             locationInfo() {
                 return this.$store.getters['weather/getLocationInfo'];
+            },
+            defaultLocationInfo() {
+                return this.$store.getters['weather/getDefaultLocationInfo'];
             },
             fetchForeCast() {
                 const forecastObj = this.$store.getters['weather/getForeCast'];
@@ -343,13 +391,16 @@
         border-radius: 4px;
         padding: 14px 15px;
     }
+
     .weather-controls {
         display: flex;
         justify-content: space-between;
     }
+
     .left-controls .search-bar{
        display: flex;
     }
+
     .left-controls .search-bar .search-field{
         width: 250px;
         margin: 0px;
@@ -364,6 +415,7 @@
         border-radius: 2px;
         background-color: aliceblue;
     }
+
     .left-controls .search-bar .search-field::placeholder{
         /* Chrome, Firefox, Opera, Safari 10.1+ */
         color: #a0a2a7;
@@ -375,6 +427,7 @@
         ::-ms-input-placeholder { /* Microsoft Edge */
         color: #a0a2a7;
     }
+
     .left-controls .search-bar .search-btn {
         border: none;
         border-radius: 2px;
@@ -387,6 +440,20 @@
         margin-left: 10px;
         cursor: pointer;
     }
+
+    .left-controls .current-location-btn{
+        border: none;
+        border-radius: 2px;
+        padding: 6px 14px;
+        font-size: 13px;
+        color: #ffffff;
+        background-color: #909399;
+        border-color: #909399;
+        cursor: pointer;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
     .right-controls{
         display: flex;
         flex-direction: column;
@@ -442,6 +509,7 @@
         border-top: 1px solid rgba(0, 0, 0, 0.1);
         border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     }
+
     .input-errors {
         color: #f56c6c;
         padding: 5px 5px;
@@ -453,34 +521,70 @@
         margin-top: 6px;
     }
 
+.weather-enter-from {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.weather-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.weather-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.weathere-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.weather-enter-to,
+.weather-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
     /****************** Mobile ******************/
     @media only screen and (max-width: 1024px) {
        .weather-controls {
         flex-direction: column;
        }
+
        .city-weather-container{
         box-shadow: none;
        }
+
        .left-controls{
            margin-bottom: 20px;
        }
-       .left-controls .search-bar[data-v-17092b4e] {
+
+       .left-controls .search-bar {
         display: flex;
         flex-direction: column;
        }
+
+       .left-controls .current-location-btn{
+          width: 100%;
+
+       }
+
        .left-controls .search-bar .search-field{
            width: 100%;
            height: 36px;
            margin-bottom: 10px;
            font-size: 16px;
        }
+
        .left-controls .search-bar .search-btn{
            margin-left: 0px;
            font-size: 19px;
        }
+
        .forecast-5-days{
            flex-direction: column;
        }
+
        .forecast-item{
          width: 100%;
          margin-bottom: 10px;

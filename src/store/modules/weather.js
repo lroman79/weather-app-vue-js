@@ -5,6 +5,7 @@ export default {
     state() {
       return {      
         locationInfo: {},
+        defaultLocationInfo: {},
         error: '',
         weatherData: {},
         forecastFiveDaysData: {},
@@ -13,6 +14,9 @@ export default {
     mutations: {
      setLocationInfo(state, payload) {
       state.locationInfo = payload;
+     },
+     setDefaultLocationInfo(state, payload) {
+       state.defaultLocationInfo = payload;
      },
      setWeather(state, payload) {
       state.weatherData = payload;
@@ -34,10 +38,26 @@ export default {
       
         return axios.get(locationInfoUrlWithParams)
          .then(res => {
-           if (res) {
-            
+           if (res) { 
             const locationInfoResponse = res.data[0];
             context.commit('setLocationInfo', locationInfoResponse);
+           }
+           return res;
+         })
+         .catch(error => console.log(error.message));      
+      },
+      loadDefaultLocationInfo(context, data) {
+        const locationCoordinates = data.location;
+        const baseURL = 'https://dataservice.accuweather.com/';
+        const geopositionSearchUrl = 'locations/v1/cities/geoposition/search';
+
+        const locationInfoUrlWithParams = `${baseURL}${geopositionSearchUrl}?apikey=${data.keyApi}&q=${locationCoordinates}`;
+      
+        return axios.get(locationInfoUrlWithParams)
+         .then(res => {
+           if (res) {
+            const locationInfoResponse = res.data;
+            context.commit('setDefaultLocationInfo', locationInfoResponse);
            }
            return res;
          })
@@ -80,6 +100,9 @@ export default {
     getters: {
      getLocationInfo(state) {
       return state.locationInfo;
+     },
+     getDefaultLocationInfo(state) {
+      return state.defaultLocationInfo;
      },
      hasLocationInfo(state) {
       return state.locationInfo;

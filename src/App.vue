@@ -7,7 +7,6 @@
     </transition>
    </router-view>
   </div>
-  <!-- <router-view></router-view> -->
 </template>
 
 <script>
@@ -35,6 +34,30 @@ body {
 .main-container{
   max-width: 80%;
   margin: 0 auto;
+}
+
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.route-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.route-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.route-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.route-enter-to,
+.route-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /****************** Mobile ******************/

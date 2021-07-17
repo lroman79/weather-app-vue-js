@@ -31,33 +31,6 @@ export default {
         return {
             storedLocationsArr: [],
             weatherArr: [],
-            // weatherArr: [
-            //     {
-            //     'EpochTime': 1626159240,
-            //     'HasPrecipitation': false,
-            //     'IsDayTime': false,
-            //     'Link': "http://www.accuweather.com/en/ca/toronto/m5h/current-weather/55488?lang=en-us",
-            //     'LocalObservationDateTime': "2021-07-13T02:54:00-04:00",
-            //     'MobileLink': "http://www.accuweather.com/en/ca/toronto/m5h/current-weather/55488?lang=en-us",
-            //     'PrecipitationType': null,
-            //     "Temperature": {
-            //         "Metric": {
-            //             "Value": 30,
-            //             "Unit": "C",
-            //             "UnitType": 17
-            //         },
-            //         "Imperial": {
-            //             "Value": 86,
-            //             "Unit": "F",
-            //             "UnitType": 18
-            //         }
-            //     },
-            //     'WeatherIcon': 38,
-            //     'WeatherText': "Mostly cloudy",
-            //     'cityName': "Toronto",
-            //     'id': "toronto"
-            //     }
-            // ],
             favoritesStorageName: 'storedFavoriteCities',
             APIkey: 'KWM5jZQwAi8lfyrJkK9BfGOSNTAxlXfC',
             //APIkey: '1BAKSQ0qyJYiMpAP4liSrutHJRd5a9zE',

@@ -1,4 +1,5 @@
 <template>
+ 
     <h2 class="weather-title">Weather Info</h2>
       <div class="weather-data-sec">
         <div class="city-temperature-info">

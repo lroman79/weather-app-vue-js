@@ -6,9 +6,6 @@
        <div class="air-tempr">
           {{ amount }} {{ unitSymbol }}
        </div>
-       <div>
-       
-       </div>
    </div>
 </template>
 

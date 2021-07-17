@@ -1,5 +1,6 @@
 <template>
   <div class="spinner">
+    <h5>The Weather is Loading...</h5>
     <div class="lds-roller">
       <div></div>
       <div></div>
@@ -17,6 +18,7 @@
 .spinner {
   display: flex;
   justify-content: center;
+  flex-direction: column;
   align-items: center;
   width: 100%;
 }
