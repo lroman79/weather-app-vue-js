@@ -22,7 +22,7 @@
         </div>
          
         <hr>
-
+  
         <section class="main-weather-info">
             <div v-if="isLoading">
                 <base-spinner></base-spinner>
@@ -47,9 +47,6 @@
 <script>
     import WeatherItem from '../components/weather/WeatherItem.vue';
     import ForeCastFiveDays from '../components/weather/ForeCastFiveDays.vue';
-    import {
-        mapState
-    } from 'vuex';
 
     export default {
         components: {
@@ -72,8 +69,6 @@
                 locationsStorageName: 'storedLocations',
                 favoritesStorageName: 'storedFavoriteCities',
                 errorMessage: null,
-                location: null,
-                errorStr: null,
                 testLocation: {
                     "LocalObservationDateTime": "2021-07-06T10:45:00+03:00",
                     "EpochTime": 1625557500,
@@ -108,8 +103,9 @@
                             return el.locationName === locationName;
                         });
                     }
+                } else {
+                    return false;
                 }
-                return false;
             },
             storeLocationInFavoriteCities() {
                 const locationName = this.cityName;
@@ -121,9 +117,9 @@
                 }
 
                 let favoriteItem = {
-                    "location": locationName.replace(' ', '_').toLowerCase(),
-                    "locationName": locationName,
-                    "id": this.currentLocationAPI
+                    location: locationName.replace(' ', '_').toLowerCase(),
+                    locationName: locationName,
+                    id: this.currentLocationAPI
                 }
 
                 const storedFavorites = JSON.parse(localStorage.getItem(storageName));
@@ -133,9 +129,7 @@
                     if (index === -1) {
                         storedFavorites.push(favoriteItem);
                         localStorage.setItem(storageName, JSON.stringify(storedFavorites));
-
                         this.isInFavorites = this.checkIfInFavorites();
-
                     }
                 } else {
                     storedFavorites.push(favoriteItem);
@@ -153,24 +147,22 @@
                     if (storedFavorites && storedFavorites.length > 0) {
                         const index = storedFavorites.findIndex(item => item.locationName === locationName);
                         if (index !== -1) {
-                            const filteredFavorites = storedFavorites.filter(item => item.locationName !==
-                            locationName);
+                            const filteredFavorites = storedFavorites.filter(item => item.locationName !== locationName);
                             localStorage.setItem(storageName, JSON.stringify(filteredFavorites));
-
                             this.isInFavorites = this.checkIfInFavorites();
                         }
                     }
                 }
             },
-            storeLocationsInLocalStorage(city, locationApi) {
+            storeLocationInLocalStorage(city, locationApi) {
                 if (localStorage.getItem(this.locationsStorageName) === null) {
                     let locationItemsArr = [];
                     localStorage.setItem(this.locationsStorageName, JSON.stringify(locationItemsArr));
                 }
 
                 let locationItem = {
-                    "location": city,
-                    "locationApi": locationApi,
+                    location: city,
+                    locationApi: locationApi,
                 }
 
                 const storedLocations = JSON.parse(localStorage.getItem(this.locationsStorageName));
@@ -198,20 +190,28 @@
                     keyApi: this.APIkey
                 });
             },
-            loadWeather(locationApi) {
-                this.$store.dispatch('weather/loadWeather', {
-                    api: locationApi,
-                    keyApi: this.APIkey
-                });
+            async loadWeather(locationApi) {
+                try {
+                    await this.$store.dispatch('weather/loadWeather', {
+                     api: locationApi,
+                     keyApi: this.APIkey
+                    });
+                } catch (err){
+                    this.errorMessage = err.message + ' - Please try later';
+                }
                 this.isLoading = false;
             },
-            loadForeCast(locationApi) {
-                this.$store.dispatch('weather/loadForeCast', {
-                    api: locationApi,
-                    keyApi: this.APIkey
-                });
+            async loadForeCast(locationApi) {
+                try {
+                    await this.$store.dispatch('weather/loadForeCast', {
+                     api: locationApi,
+                     keyApi: this.APIkey
+                    });
+                } catch(err) {
+                    this.errorMessage = err.message + ' - Please try later';
+                }
             },
-            fetchWeather() {
+            async fetchWeather() {
                 let locationCity = this.cityQuery;
                 let locationApi = null;
                 this.errorMessage = '';
@@ -238,28 +238,27 @@
                 }
 
                 if (!locationApi) {
-                    this.loadLocationInfo(locationCity)
-                        .then(res => {                                            
-                            if (res.data && res.data.length > 0) {
-                                const locationInfo = this.locationInfo;
-                                locationApi = locationInfo.Key;                               
-                                this.cityName = locationInfo.LocalizedName;
+                    try {
+                        await this.loadLocationInfo(locationCity);                                         
+                        const locationInfo = this.locationInfo;
+                        locationApi = locationInfo.Key;                               
+                                        
+                        this.cityName = locationInfo.LocalizedName;
+                        this.currentLocationAPI = locationApi;
 
-                                this.loadWeather(locationApi);
-                                this.loadForeCast(locationApi);
+                        this.loadWeather(locationApi);
+                        this.loadForeCast(locationApi);
 
-                                this.currentLocationAPI = locationApi;
-                                this.isInFavorites = this.checkIfInFavorites();
+                        this.isInFavorites = this.checkIfInFavorites();
 
-                                //Save location info in localstorage
-                                if (locationInfo.LocalizedName && locationInfo.Key) {
-                                    this.storeLocationsInLocalStorage(locationInfo.LocalizedName, locationInfo.Key);
-                                }
-                            }
-                        })
-                        .catch(err => {
-                            console.log(err);
-                        });
+                        //Save location info in localstorage
+                        if (locationInfo.LocalizedName && locationInfo.Key) {
+                            this.storeLocationInLocalStorage(locationInfo.LocalizedName, locationInfo.Key);
+                        }
+
+                    } catch(err) {
+                        this.errorMessage = err.message + ' - Please try later';
+                    }
                 } else {
                     this.loadWeather(locationApi);
                     this.loadForeCast(locationApi);
@@ -268,61 +267,67 @@
                     this.isInFavorites = this.checkIfInFavorites();
                 }
             },
-            fetchCurrentLocationWeather() {
+            requestPosition() {
+                const options = {
+                 enableHighAccuracy: true,
+                };
+
+                return new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => { resolve(pos); }, 
+                        err => { reject (err); }, 
+                        options
+                    );
+                });
+            },
+            async fetchCurrentLocationWeather() {
                 if(!this.isSupportGeolocation) {
                     this.errorMessage = 'Geolocation is not available.';
                     return;
                 }
-                
-                window.navigator.geolocation.getCurrentPosition(pos => {
-                 const coordsObj = { 
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude
-                 };
+                try {
+                    const position = await this.requestPosition();
 
-                 const geoCoordinates = `${coordsObj.latitude.toFixed(1)},${coordsObj.longitude.toFixed(1)}`;
+                    const coordsObj = { 
+                     latitude: position.coords.latitude,
+                     longitude: position.coords.longitude
+                    };
 
-                 this.loadDefaultLocationInfo(geoCoordinates)
-                        .then(res => {                            
-                            if (res.data && Object.keys(res.data).length !== 0) {
-                                const locationInfo = this.defaultLocationInfo;
-                                const locationApi = locationInfo.Key;                   
-                                this.cityName = locationInfo.LocalizedName;
+                    const geoCoordinates = `${coordsObj.latitude.toFixed(1)},${coordsObj.longitude.toFixed(1)}`;
+                    this.coordinates = geoCoordinates;
+         
+                    await this.loadDefaultLocationInfo(geoCoordinates);
+                    const locationInfo = this.defaultLocationInfo;
+                    const locationApi = locationInfo.Key;                   
+                    this.cityName = locationInfo.LocalizedName;
+                    this.currentLocationAPI = locationApi;
 
-                                this.loadWeather(locationApi);
-                                this.loadForeCast(locationApi);
+                    this.loadWeather(locationApi);
+                    this.loadForeCast(locationApi);
 
-                                this.currentLocationAPI = locationApi;
-                                this.isInFavorites = this.checkIfInFavorites();
-                            }
-                        })
-                        .catch(err => {
-                            console.log(err);
-                        });
-
-                }, err => {
-                 this.gettingLocation = false;
-                 this.errorMessage = `Sorry, but the following error occurred: '${err.message}`;
-                })
+                    this.isInFavorites = this.checkIfInFavorites();
+                    } catch(err) {
+                     this.errorMessage = `Sorry, but the following error occurred: '${err.message}`;
+                     console.log(err);
+                    }
             },
             initWeatherData() {
-                    if (this.$route.query.locationId && this.$route.query.locationName) {
-                        this.loadWeather(this.$route.query.locationId); 
-                        this.loadForeCast(this.$route.query.locationId);
+                let locationId = this.defaultLocationAPI;
+                let locationName = this.defaultLocationCity;
 
-                        this.cityName = this.$route.query.locationName;
-                        this.currentLocationAPI = this.$route.query.locationId; 
-                    }  else {
-                        this.loadWeather(this.defaultLocationAPI);
-                        this.loadForeCast(this.defaultLocationAPI); 
+                if (this.$route.query.locationId && this.$route.query.locationName) {
+                    locationId = this.$route.query.locationId;
+                    locationName = this.$route.query.locationName;
+                }
+                this.loadWeather(locationId); 
+                this.loadForeCast(locationId);
 
-                        this.cityName = this.defaultLocationCity;
-                        this.currentLocationAPI = this.defaultLocationAPI; 
-                    } 
-                   this.isInFavorites = this.checkIfInFavorites();       
+                this.cityName = locationName;
+                this.currentLocationAPI = locationId; 
+                this.isInFavorites = this.checkIfInFavorites();       
             },
             isSupportGeolocation() {
-             return (("geolocation" in window.navigator)) ? true : false;
+             return "geolocation" in window.navigator;
             },
             toggleUnits() {
                 if (this.TemperatureUnit !== "Imperial") {
@@ -333,21 +338,15 @@
             },   
         },
         computed: {
-            ...mapState({
-                getError: 'error',
-            }),
             getWeather() {
                 const weather = this.$store.getters['weather/getWeather'];
-
-                let cityName = this.cityName;
-
                 let iconNumber = weather.WeatherIcon;
                 if (iconNumber < 10) {
                     iconNumber = '0' + iconNumber;
                 }
                 const iconUrl = `https://developer.accuweather.com/sites/default/files/${iconNumber}-s.png`;
 
-                weather.cityName = cityName;
+                weather.cityName = this.cityName;
                 weather.icon = iconUrl;
 
                 return weather;

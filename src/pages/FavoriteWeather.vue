@@ -37,11 +37,8 @@ export default {
         }
     },
     methods: {
-        loadLocationInfo(locationCity) {           
-            return this.$store.dispatch('favorites/loadLocationInfo', {location: locationCity, keyApi: this.APIkey});     
-        },
         loadWeather(locationApi) {             
-            return this.$store.dispatch('favorites/loadWeather', {api: locationApi, keyApi: this.APIkey});                                  
+            return this.$store.dispatch('favorites/loadWeather', { api: locationApi, keyApi: this.APIkey });                                  
         },
         fillWeatherArr() { 
             const locationsArr = this.getFavoriteCities;
@@ -56,9 +53,9 @@ export default {
                     this.loadWeather(item.id)
                     .then(res => {
                         if (res) {
-                        const weatherObj = this.getWeather;
-                        const finalWeatherObj = { ...locationObj, ...weatherObj };
-                        this.weatherArr.push(finalWeatherObj);
+                         const weatherObj = this.getWeather;
+                         const finalWeatherObj = { ...locationObj, ...weatherObj };
+                         this.weatherArr.push(finalWeatherObj);
                         }
                     }) 
                     .catch( err => { console.log(err) });                            
@@ -69,10 +66,10 @@ export default {
 
             if (localStorage.getItem(this.favoritesStorageName) !== null) {
 
-              const storedFavoritesObj = JSON.parse(localStorage.getItem(this.favoritesStorageName));
+              const storedFavoritesArr = JSON.parse(localStorage.getItem(this.favoritesStorageName));
 
-              if (storedFavoritesObj && storedFavoritesObj.length > 0) {               
-               this.storedLocationsArr = storedFavoritesObj;
+              if (storedFavoritesArr && storedFavoritesArr.length > 0) {               
+               this.storedLocationsArr = storedFavoritesArr;
               }   
             } 
         }
