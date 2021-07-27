@@ -30,7 +30,8 @@
              <weather-item v-else-if="hasWeather" 
                 :icon="getWeather.icon" 
                 :cityname="getWeather.cityName"
-                :weathertext="getWeather.WeatherText" :amount="getWeather.Temperature.Metric.Value"
+                :weathertext="getWeather.WeatherText" 
+                :amount="getWeather.Temperature.Metric.Value"
                 :unit="getWeather.Temperature.Metric.Unit"></weather-item>
         </section>
 
@@ -38,7 +39,8 @@
             <fore-cast-five-days 
                 v-for="forecastItem in fetchForeCast" 
                 :key="forecastItem.index"
-                :date="forecastItem.Date" :unit="forecastItem.Temperature.Maximum.Unit"
+                :date="forecastItem.Date" 
+                :unit="forecastItem.Temperature.Maximum.Unit"
                 :amount="forecastItem.Temperature.Maximum.Value"></fore-cast-five-days>
         </div>
     </div>

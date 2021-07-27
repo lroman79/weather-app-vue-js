@@ -15,7 +15,7 @@
                 :amount="favoriteItem.Temperature.Metric.Value"
             ></favorite-city>
         </div>
-        <div class="empty-favorites-sec" v-else>No favorite Weather!</div>
+        <div class="empty-favorites-sec" v-else>No Favorite Weather found!</div>
     </section>
    </div>
 </template>
@@ -40,7 +40,7 @@ export default {
         loadWeather(locationApi) {             
             return this.$store.dispatch('favorites/loadWeather', { api: locationApi, keyApi: this.APIkey });                                  
         },
-        fillWeatherArr() { 
+        setWeatherArr() { 
             const locationsArr = this.getFavoriteCities;
          
             if (locationsArr.length > 0 && locationsArr[0]) {
@@ -51,27 +51,39 @@ export default {
                     locationObj.id = item.id;
 
                     this.loadWeather(item.id)
-                    .then(res => {
-                        if (res) {
-                         const weatherObj = this.getWeather;
-                         const finalWeatherObj = { ...locationObj, ...weatherObj };
-                         this.weatherArr.push(finalWeatherObj);
-                        }
-                    }) 
+                        .then(res => {
+                            if (res) {
+                            const weatherObj = this.getWeather;
+                            const finalWeatherObj = { ...locationObj, ...weatherObj };
+                            this.weatherArr.push(finalWeatherObj);
+                            }
+                        }) 
                     .catch( err => { console.log(err) });                            
                 }); 
             }                     
         },
         getLocationsFromLocalStorage() {   
-
+         return new Promise((resolve, reject) => {
             if (localStorage.getItem(this.favoritesStorageName) !== null) {
 
               const storedFavoritesArr = JSON.parse(localStorage.getItem(this.favoritesStorageName));
 
-              if (storedFavoritesArr && storedFavoritesArr.length > 0) {               
-               this.storedLocationsArr = storedFavoritesArr;
+              if (storedFavoritesArr && storedFavoritesArr.length > 0) {
+                this.storedLocationsArr = storedFavoritesArr;
+                resolve();                                      
               }   
-            } 
+            } else {
+                reject(new Error('No favorites found!'));
+            }
+         });               
+        },
+        async initFavoriteWeather() {
+         try {
+          await this.getLocationsFromLocalStorage();
+          this.setWeatherArr();
+         } catch(err) {
+            console.log(err);
+         }
         }
     },
     computed: {
@@ -93,8 +105,7 @@ export default {
         }
     },
     created() {
-       this.getLocationsFromLocalStorage();
-       this.fillWeatherArr();
+     this.initFavoriteWeather();
     }
 }
 </script>
