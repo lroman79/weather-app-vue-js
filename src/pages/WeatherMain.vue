@@ -364,7 +364,7 @@
             },
         },
         created() {
-            //this.initWeatherData();
+            this.initWeatherData();
         },
     }
 </script>

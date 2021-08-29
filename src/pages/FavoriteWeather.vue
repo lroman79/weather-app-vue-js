@@ -105,7 +105,7 @@ export default {
         }
     },
     created() {
-     //this.initFavoriteWeather();
+     this.initFavoriteWeather();
     }
 }
 </script>
