@@ -18,7 +18,7 @@ export default {
    },
    methods: {
       goToDitails() {
-        this.$router.push({path:'/',query:{locationId: this.id, locationName: this.cityname }});
+        this.$router.push({ path:'/', query: { locationId: this.id, locationName: this.cityname } });
       }
    },
    computed: {

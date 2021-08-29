@@ -1,8 +1,8 @@
 <template>
-<div class="fvorites-container">
+  <div class="fvorites-container">
     <section>
         <h3 class="favorite-title">Favorite Weather</h3>
-             
+             {{}}
         <div class="favorite-item-wrp" v-if="hasFavoriteLocations">  
             <favorite-city
                 v-for="favoriteItem in favoriteItems"
@@ -58,7 +58,7 @@ export default {
                             this.weatherArr.push(finalWeatherObj);
                             }
                         }) 
-                    .catch( err => { console.log(err) });                            
+                        .catch( err => { console.log(err) });                            
                 }); 
             }                     
         },
@@ -105,7 +105,7 @@ export default {
         }
     },
     created() {
-     this.initFavoriteWeather();
+     //this.initFavoriteWeather();
     }
 }
 </script>

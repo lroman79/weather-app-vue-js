@@ -3,7 +3,7 @@
         <div class="weather-controls">
             <section class="left-controls">
                 <div class="search-bar">
-                 <input type="text" class="search-field" onkeypress="return /^[a-zA-Z\s]+$/.test(event.key)"
+                 <input type="text" class="search-field" onkeydown="return /^[a-zA-Z\s]+$/.test(event.key)"
                     placeholder="Search Locations..." v-model="cityQuery" />
                  <button class="search-btn" @click="fetchWeather">Search</button>
                 </div>
@@ -66,8 +66,8 @@
                 cityName: '',
                 TemperatureUnit: 'Metric',
                 cityQuery: '',
-                //APIkey: 'KWM5jZQwAi8lfyrJkK9BfGOSNTAxlXfC',
-                APIkey: '1BAKSQ0qyJYiMpAP4liSrutHJRd5a9zE',
+                APIkey: 'KWM5jZQwAi8lfyrJkK9BfGOSNTAxlXfC',
+                //APIkey: '1BAKSQ0qyJYiMpAP4liSrutHJRd5a9zE',
                 locationsStorageName: 'storedLocations',
                 favoritesStorageName: 'storedFavoriteCities',
                 errorMessage: null,
@@ -180,18 +180,6 @@
                     localStorage.setItem(this.locationsStorageName, JSON.stringify(storedLocations));
                 }
             },
-            loadLocationInfo(locationCity) {
-                return this.$store.dispatch('weather/loadLocationInfo', {
-                    location: locationCity,
-                    keyApi: this.APIkey
-                });
-            },
-            loadDefaultLocationInfo(locationCoordinates) {
-                return this.$store.dispatch('weather/loadDefaultLocationInfo', {
-                    location: locationCoordinates,
-                    keyApi: this.APIkey
-                });
-            },
             async loadWeather(locationApi) {
                 try {
                     await this.$store.dispatch('weather/loadWeather', {
@@ -241,7 +229,10 @@
 
                 if (!locationApi) {
                     try {
-                        await this.loadLocationInfo(locationCity);                                         
+                        await this.$store.dispatch('weather/loadLocationInfo', {
+                         location: locationCity,
+                         keyApi: this.APIkey
+                        });                                         
                         const locationInfo = this.locationInfo;
                         locationApi = locationInfo.Key;                               
                                         
@@ -296,9 +287,11 @@
                     };
 
                     const geoCoordinates = `${coordsObj.latitude.toFixed(1)},${coordsObj.longitude.toFixed(1)}`;
-                    this.coordinates = geoCoordinates;
          
-                    await this.loadDefaultLocationInfo(geoCoordinates);
+                    await this.$store.dispatch('weather/loadDefaultLocationInfo', {
+                     location: geoCoordinates,
+                     keyApi: this.APIkey
+                    });
                     const locationInfo = this.defaultLocationInfo;
                     const locationApi = locationInfo.Key;                   
                     this.cityName = locationInfo.LocalizedName;
@@ -371,7 +364,7 @@
             },
         },
         created() {
-            this.initWeatherData();
+            //this.initWeatherData();
         },
     }
 </script>

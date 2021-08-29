@@ -31,9 +31,9 @@ export default {
         return axios.get(locationInfoUrlWithParams)
          .then(res => {
            if (res) {
-            const locationInfoResponse = res.data[0];
+            const [locationInfoResponse] = res.data;
             context.commit('setLocationInfo', locationInfoResponse);
-            console.log('Location is loaded: from Vuex: ' + JSON.stringify(context.state.locationInfo));
+            //console.log('Location is loaded: from Vuex: ' + JSON.stringify(context.state.locationInfo));
            }
            return true;
          })
@@ -49,7 +49,7 @@ export default {
         return axios.get(weatherUrlWithParams)
         .then(res => {
           if (res) {
-            const responseDataWeather = res.data[0];
+            const [responseDataWeather] = res.data;
             context.commit('setWeather', responseDataWeather);
           }
           return true;

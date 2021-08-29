@@ -37,11 +37,12 @@ export default {
         
         try {
           const res = await axios.get(locationInfoUrlWithParams);
-          if (res.data.length) { 
-            const locationInfoResponse = res.data[0];
-            context.commit('setLocationInfo', locationInfoResponse);
-            return locationInfoResponse;
-           }
+          if (res.data.length > 0) { 
+            const [locationInfoResponse] = res.data;
+            context.commit('setLocationInfo', locationInfoResponse); 
+          } else {
+            throw new Error('Failed to fetch location Info!');
+          }
         } catch(err) {
            const error = new Error(err.message || 'Failed to fetch location Info!');
            throw error;
@@ -54,10 +55,10 @@ export default {
         const locationInfoUrlWithParams = `${baseURL}${geopositionSearchUrl}?apikey=${data.keyApi}&q=${locationCoordinates}`;
       
         try {
-          const res = await axios.get(locationInfoUrlWithParams)
+          const res = await axios.get(locationInfoUrlWithParams);
           const locationInfoResponse = res.data;
           context.commit('setDefaultLocationInfo', locationInfoResponse);
-          return locationInfoResponse;
+         
         } catch(err) {
           const error = new Error(err.message || 'Failed to fetch Default location Info!');
           throw error;
@@ -71,9 +72,9 @@ export default {
          
         try {
           const res = await axios.get(weatherUrlWithParams);         
-          const responseDataWeather = res.data[0];
+          const [responseDataWeather] = res.data;
           context.commit('setWeather', responseDataWeather);
-
+          console.log(res);
         } catch(err) {
           const error = new Error(err.message || 'Failed to fetch weather!');
           console.log(err);
@@ -82,8 +83,9 @@ export default {
       },
       async loadForeCast(context, data) {
        const locationApi = data.api;
-       const foreCastUrl = 'https://dataservice.accuweather.com/forecasts/v1/daily/5day/';                        
-       const locationInfoUrlWithParams = `${foreCastUrl}${locationApi}?apikey=${data.keyApi}&metric=true`;
+       const baseUrl = 'https://dataservice.accuweather.com/';
+       const foreCastUrl = 'forecasts/v1/daily/5day/';                        
+       const locationInfoUrlWithParams = `${baseUrl}${foreCastUrl}${locationApi}?apikey=${data.keyApi}&metric=true`;
 
         try {
           const responseLocationInfo = await fetch(locationInfoUrlWithParams);
